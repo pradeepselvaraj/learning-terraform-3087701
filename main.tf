@@ -33,26 +33,16 @@ module "blog_vpc" {
   }
 }
 
-module "autoscaling" {
-  source  = "terraform-aws-modules/autoscaling/aws"
-  version = "8.2.0"
+resource "aws_instance" "blog" {
+  ami                    = data.aws_ami.app_ami.id
+  instance_type          = var.instance_type
+  vpc_security_group_ids = [module.blog_sg.security_group_id]
 
-  name                 = "blog"
-  min_size             = 1
-  max_size             = 2
-  vpc_zone_identifier  = module.blog_vpc.public_subnets
-  security_groups      = [module.blog_sg.security_group_id]
-  image_id             = data.aws_ami.app_ami.id
-  instance_type        = var.instance_type
+  subnet_id = module.blog_vpc.public_subnets[0]
 
-  # Attach ALB Target Group here
-  load_balancers = [
-    {
-      target_group_arn = module.blog_alb.target_groups["ex-instance"].arn
-      container_name   = null
-      container_port   = null
-    }
-  ]
+  tags = {
+    Name = "Learning Terraform"
+  }
 }
 
 module "blog_alb" {
@@ -61,7 +51,7 @@ module "blog_alb" {
   name     = "blog-alb"
   vpc_id   = module.blog_vpc.vpc_id
   subnets  = module.blog_vpc.public_subnets
-  security_groups = [module.blog_sg.security_group_id]
+  secgroup = [module.blog_sg.security_group_id]
 
 
   # Security Group
@@ -106,6 +96,7 @@ module "blog_alb" {
       protocol         = "HTTP"
       port             = 80
       target_type      = "instance"
+      target_id        = aws_instance.blog.id
     }
   }
 
