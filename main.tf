@@ -37,16 +37,22 @@ module "autoscaling" {
   source  = "terraform-aws-modules/autoscaling/aws"
   version = "8.2.0"
 
-  name = "blog"
-  min_size = 1
-  max_size = 2
+  name                 = "blog"
+  min_size             = 1
+  max_size             = 2
+  vpc_zone_identifier  = module.blog_vpc.public_subnets
+  security_groups      = [module.blog_sg.security_group_id]
+  image_id             = data.aws_ami.app_ami.id
+  instance_type        = var.instance_type
 
-  vpc_zone_identifier = module.blog_vpc.public_subnets
-  target_group_arns   = module.blog_alb.target_group_arns
-  security_groups     = [module.blog_sg.security_group_id]
-
-  image_id       = data.aws_ami.app_ami.id
-  instance_type  = var.instance_type
+  # Attach ALB Target Group here
+  load_balancers = [
+    {
+      target_group_arn = module.blog_alb.target_groups["ex-instance"].arn
+      container_name   = null
+      container_port   = null
+    }
+  ]
 }
 
 module "blog_alb" {
