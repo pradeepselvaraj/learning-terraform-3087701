@@ -51,7 +51,7 @@ module "blog_alb" {
   name     = "blog-alb"
   vpc_id   = module.blog_vpc.vpc_id
   subnets  = module.blog_vpc.public_subnets
-  secgroup = [module.blog_sg.security_group_id]
+  security_group = [module.blog_sg.security_group_id]
 
 
   # Security Group
